@@ -106,17 +106,17 @@ private:
 };
 
 /**
- * \brief A class to facilitate making diagnostics for a topic using a
+ * \brief A class to facilitate making diagnostics for an event using a
  * FrequencyStatus and TimeStampStatus. 
  */
 
-class TopicDiagnostic : public CompositeDiagnosticTask
+class EventDiagnostic : public CompositeDiagnosticTask
 {
 public:
 /**
- * \brief Constructs a TopicDiagnostic with FrequencyStatus
+ * \brief Constructs an EventDiagnostic with FrequencyStatus
  *
- * \param name The name of the topic that is being diagnosed.
+ * \param name The name of the event that is being diagnosed.
  *
  * \param diag The diagnostic_updater that the CompositeDiagnosticTask
  * should add itself to.
@@ -125,7 +125,7 @@ public:
  * computing statistics.
  */
 
-  TopicDiagnostic(
+  EventDiagnostic(
       std::string name,
       diagnostic_updater::Updater &diag,
       const diagnostic_updater::FrequencyStatusParam &freq):
@@ -138,9 +138,9 @@ public:
   }
 
 /**
- * \brief Constructs a TopicDiagnostic with TimeStampStatus
+ * \brief Constructs an EventDiagnostic with TimeStampStatus
  *
- * \param name The name of the topic that is being diagnosed.
+ * \param name The name of the event that is being diagnosed.
  *
  * \param diag The diagnostic_updater that the CompositeDiagnosticTask
  * should add itself to.
@@ -149,7 +149,7 @@ public:
  * computing statistics.
  */
 
-  TopicDiagnostic(
+  EventDiagnostic(
       std::string name,
       diagnostic_updater::Updater &diag,
       const diagnostic_updater::TimeStampStatusParam &stamp):
@@ -162,9 +162,9 @@ public:
   }
 
 /**
- * \brief Constructs a TopicDiagnostic with FrequencyStatus and TimeStampStatus
+ * \brief Constructs an EventDiagnostic with FrequencyStatus and TimeStampStatus
  *
- * \param name The name of the topic that is being diagnosed.
+ * \param name The name of the event that is being diagnosed.
  *
  * \param diag The diagnostic_updater that the CompositeDiagnosticTask
  * should add itself to.
@@ -176,7 +176,7 @@ public:
  * computing statistics.
  */
 
-  TopicDiagnostic(
+  EventDiagnostic(
       std::string name,
       diagnostic_updater::Updater &diag,
       const diagnostic_updater::FrequencyStatusParam &freq,
@@ -190,20 +190,20 @@ public:
     diag.add(*this);
   }
   
-  virtual ~TopicDiagnostic()
+  virtual ~EventDiagnostic()
   {
     if (freq_) delete freq_;
     if (stamp_) delete stamp_;
   }
   
   /**
-	 * This method should never be called on a TopicDiagnostic as a timestamp
+	 * This method should never be called on an EventDiagnostic as a timestamp
 	 * is needed to collect the timestamp diagnostics. It is defined here to
 	 * prevent the inherited tick method from being used accidentally.
 	 */
 	virtual void tick() {
     if (stamp_) {
-      ROS_FATAL("tick(void) has been called on a TopicDiagnostic with TimeStampStatus. This is never correct. Use tick(ros::Time &) instead.");
+      ROS_FATAL("tick(void) has been called on an EventDiagnostic with TimeStampStatus. This is never correct. Use tick(ros::Time &) instead.");
       return;
     }
     if (freq_) freq_->tick();
@@ -224,6 +224,88 @@ public:
 private:
   FrequencyStatus* const freq_;
   TimeStampStatus* const stamp_;
+};
+
+/**
+ * \brief A class to facilitate making diagnostics for a topic using a
+ * FrequencyStatus and TimeStampStatus.
+ */
+
+class TopicDiagnostic : public EventDiagnostic {
+public:
+  /**
+   * \brief Constructs a TopicDiagnostic with FrequencyStatus
+   * 
+   * \param name The name of the topic is being diagnosed.
+   * 
+   * \param diag The diagnostic_updater that the CompositeDiagnosticTask
+   * should add itself to.
+   * 
+   * \param freq The parameters for the FrequencyStatus class that will be
+   * computing statistics.
+   */
+
+  TopicDiagnostic(
+      std::string name,
+      diagnostic_updater::Updater &diag,
+      const diagnostic_updater::FrequencyStatusParam &freq):
+    EventDiagnostic(
+      name + "topic status",
+      diag,
+      freq
+    )
+  {}
+
+  /**
+   * \brief Constructs a TopicDiagnostic with TimeStampStatus
+   * 
+   * \param name The name of the topic that is being diagnosed.
+   * 
+   * \param diag The diagnostic_updater that the CompositeDiagnosticTask
+   * should add itself to.
+   * 
+   * \param stamp The parameters for the TimeStampStatus class that will be
+   * computing statistics.
+   */
+
+  TopicDiagnostic(
+      std::string name,
+      diagnostic_updater::Updater &diag,
+      const diagnostic_updater::TimeStampStatusParam &stamp):
+    EventDiagnostic(
+      name + "topic status",
+      diag,
+      stamp
+    )
+  {}
+
+  /**
+   * \brief Constructs a TopicDiagnostic with FrequencyStatus and TimeStampStatus
+   * 
+   * \param name The name of the topic that is being diagnosed.
+   * 
+   * \param diag The diagnostic_updater that the CompositeDiagnosticTask
+   * should add itself to.
+   * 
+   * \param freq The parameters for the FrequencyStatus class that will be
+   * computing statistics.
+   * 
+   * \param stamp The parameters for the TimeStampStatus class that will be
+   * computing statistics.
+   */
+
+  TopicDiagnostic(
+      std::string name,
+      diagnostic_updater::Updater &diag,
+      const diagnostic_updater::FrequencyStatusParam &freq,
+      const diagnostic_updater::TimeStampStatusParam &stamp) :
+    EventDiagnostic(
+      name + "topic status",
+      diag,
+      freq,
+      stamp
+    )
+  {}
 };
 
 /**
@@ -340,11 +422,11 @@ public:
 
 private:
   void tick_with_header(const T& message) {
-    TopicDiagnostic::tick(message.header.stamp);
+    EventDiagnostic::tick(message.header.stamp);
   }
 
   void tick_headerless(const T& message) {
-    TopicDiagnostic::tick();
+    EventDiagnostic::tick();
   }
 
   boost::function<void (const T&)> bind_tick() const {
